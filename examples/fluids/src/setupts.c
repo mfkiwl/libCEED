@@ -190,6 +190,7 @@ PetscErrorCode IFunction_NS(TS ts, PetscReal t, Vec Q, Vec Q_dot, Vec G, void *u
   PetscCall(VecP2C(G_loc, &g_mem_type, user->g_ceed));
 
   // Apply CEED operator
+  // like call to elmgmr, apply the op_ifunction
   CeedOperatorApply(user->op_ifunction, user->q_ceed, user->g_ceed, CEED_REQUEST_IMMEDIATE);
 
   // Restore vectors
