@@ -69,13 +69,19 @@ CEED_QFUNCTION_HELPER void DataDrivenInference(const CeedScalar *inputs, CeedSca
   MatVecNM(weight2, V, num_outputs, num_neurons, CEED_NOTRANSPOSE, outputs);
 }
 
-CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_aniso[3][3], const CeedScalar km_A_ij[6], const CeedScalar delta,
-                                                    const CeedScalar viscosity, CeedScalar kmsgs_stress[6], SGS_DDModelContext sgsdd_ctx) {
-  CeedScalar inputs[6], grad_velo_magnitude, eigenvectors[3][3], sgs_sframe_sym[6] = {0.};
+//CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_aniso[3][3], const CeedScalar km_A_ij[6], const CeedScalar delta,
+//                                                    const CeedScalar viscosity, CeedScalar kmsgs_stress[6], SGS_DDModelContext sgsdd_ctx) {
+//CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(CeedScalar kmsgs_stress[6], SGS_DDModelContext sgsdd_ctx) {
+CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(CeedScalar qi[6], SGS_DDModelContext sgsdd_ctx) {
+  //CeedScalar inputs[6], grad_velo_magnitude, eigenvectors[3][3], sgs_sframe_sym[6] = {0.};
+  //CeedScalar inputs[6], sgs_sframe_sym[6] = {1.};
+  CeedScalar sgs_sframe_sym[6] = {0.};
 
   //ComputeSGS_DDAnisotropicInputs(grad_velo_aniso, km_A_ij, delta, viscosity, eigenvectors, inputs, &grad_velo_magnitude);
 
-  DataDrivenInference(inputs, sgs_sframe_sym, sgsdd_ctx);
+  //DataDrivenInference(inputs, sgs_sframe_sym, sgsdd_ctx);
+  //DataDrivenInference(kmsgs_stress, kmsgs_stress, sgsdd_ctx);
+  DataDrivenInference(qi, sgs_sframe_sym, sgsdd_ctx);
 
   //CeedScalar old_bounds[6][2] = {{0}};
   //for (int j = 0; j < 6; j++) old_bounds[j][1] = 1;
@@ -104,31 +110,34 @@ CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_a
 CEED_QFUNCTION_HELPER int ComputeSGS_DDAnisotropicNodal(void *ctx, CeedInt Q, const CeedScalar *const *in, CeedScalar *const *out,
                                                         StateFromQi_t StateFromQi) {
   const CeedScalar(*q)[CEED_Q_VLA]            = (const CeedScalar(*)[CEED_Q_VLA])in[0];
-  const CeedScalar(*x)[CEED_Q_VLA]            = (const CeedScalar(*)[CEED_Q_VLA])in[1];
-  const CeedScalar(*grad_velo)[3][CEED_Q_VLA] = (const CeedScalar(*)[3][CEED_Q_VLA])in[2];
-  const CeedScalar(*A_ij_delta)[CEED_Q_VLA]   = (const CeedScalar(*)[CEED_Q_VLA])in[3];
-  const CeedScalar(*inv_multiplicity)         = (const CeedScalar(*))in[4];
-  CeedScalar(*v)[CEED_Q_VLA]                  = (CeedScalar(*)[CEED_Q_VLA])out[0];
+  //const CeedScalar(*x)[CEED_Q_VLA]            = (const CeedScalar(*)[CEED_Q_VLA])in[1];
+  //const CeedScalar(*grad_velo)[3][CEED_Q_VLA] = (const CeedScalar(*)[3][CEED_Q_VLA])in[2];
+  //const CeedScalar(*A_ij_delta)[CEED_Q_VLA]   = (const CeedScalar(*)[CEED_Q_VLA])in[3];
+  //const CeedScalar(*inv_multiplicity)         = (const CeedScalar(*))in[4];
+  //CeedScalar(*v)[CEED_Q_VLA]                  = (CeedScalar(*)[CEED_Q_VLA])out[0];
 
   const SGS_DDModelContext       sgsdd_ctx = (SGS_DDModelContext)ctx;
-  const NewtonianIdealGasContext gas       = &sgsdd_ctx->gas;
+  //const NewtonianIdealGasContext gas       = &sgsdd_ctx->gas;
 
   CeedPragmaSIMD for (CeedInt i = 0; i < Q; i++) {
-    const CeedScalar qi[5]                 = {q[0][i], q[1][i], q[2][i], q[3][i], q[4][i]};
-    const CeedScalar x_i[3]                = {x[0][i], x[1][i], x[2][i]};
-    const CeedScalar grad_velo_aniso[3][3] = {
-        {grad_velo[0][0][i], grad_velo[0][1][i], grad_velo[0][2][i]},
-        {grad_velo[1][0][i], grad_velo[1][1][i], grad_velo[1][2][i]},
-        {grad_velo[2][0][i], grad_velo[2][1][i], grad_velo[2][2][i]}
-    };
-    const CeedScalar km_A_ij[6] = {A_ij_delta[0][i], A_ij_delta[1][i], A_ij_delta[2][i], A_ij_delta[3][i], A_ij_delta[4][i], A_ij_delta[5][i]};
-    const CeedScalar delta      = A_ij_delta[6][i];
-    const State      s          = StateFromQi(gas, qi, x_i);
-    CeedScalar       km_sgs[6];
+    //const CeedScalar qi[5]                 = {q[0][i], q[1][i], q[2][i], q[3][i], q[4][i]};
+    CeedScalar qi[6]                 = {q[0][i], q[1][i], q[2][i], q[3][i], q[4][i], q[4][i]};
+  //  const CeedScalar x_i[3]                = {x[0][i], x[1][i], x[2][i]};
+  //  const CeedScalar grad_velo_aniso[3][3] = {
+  //      {grad_velo[0][0][i], grad_velo[0][1][i], grad_velo[0][2][i]},
+  //      {grad_velo[1][0][i], grad_velo[1][1][i], grad_velo[1][2][i]},
+  //      {grad_velo[2][0][i], grad_velo[2][1][i], grad_velo[2][2][i]}
+  //  };
+    //const CeedScalar km_A_ij[6] = {A_ij_delta[0][i], A_ij_delta[1][i], A_ij_delta[2][i], A_ij_delta[3][i], A_ij_delta[4][i], A_ij_delta[5][i]};
+    //const CeedScalar delta      = A_ij_delta[6][i];
+    //const State      s          = StateFromQi(gas, qi, x_i);
+    //CeedScalar       km_sgs[6];
 
-    ComputeSGS_DDAnisotropic(grad_velo_aniso, km_A_ij, delta, gas->mu / s.U.density, km_sgs, sgsdd_ctx);
+    //ComputeSGS_DDAnisotropic(grad_velo_aniso, km_A_ij, delta, gas->mu / s.U.density, km_sgs, sgsdd_ctx);
+    //ComputeSGS_DDAnisotropic(km_sgs, sgsdd_ctx);
+    ComputeSGS_DDAnisotropic(qi, sgsdd_ctx);
 
-    for (int j = 0; j < 6; j++) v[j][i] = inv_multiplicity[i] * km_sgs[j];
+    //for (int j = 0; j < 6; j++) v[j][i] = inv_multiplicity[i] * km_sgs[j];
   }
   return 0;
 }

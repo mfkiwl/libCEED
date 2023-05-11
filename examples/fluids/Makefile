@@ -34,11 +34,11 @@ ifdef SMARTREDIS_DIR
 endif
 
 # LibTorch
-LINK_LIBTORCH ?=
-LT_INCPATH := $(if $(LINK_LIBTORCH),shell python -c "import torch.utils.cpp_extension as C; print('-I' + str.join(' -I', C.include_paths()))",)
-LT_LIBPATH := $(if $(LINK_LIBTORCH),shell python -c "import torch.utils.cpp_extension as C; print(C.include_paths()[0] + '/../')",)
-LT_USE_CUDA := $(if $(LINK_LIBTORCH),shell python -c "import torch; print(torch.cuda.is_available())",)
-ltorch := $(if $(LINK_LIBTORCH),-ltorch -lcaffe2 -lc10,)
+#LINK_LIBTORCH ?=
+#LT_INCPATH := $(if $(LINK_LIBTORCH),shell python -c "import torch.utils.cpp_extension as C; print('-I' + str.join(' -I', C.include_paths()))",)
+#LT_LIBPATH := $(if $(LINK_LIBTORCH),shell python -c "import torch.utils.cpp_extension as C; print(C.include_paths()[0] + '/../')",)
+#LT_USE_CUDA := $(if $(LINK_LIBTORCH),shell python -c "import torch; print(torch.cuda.is_available())",)
+#ltorch := $(if $(LINK_LIBTORCH),-ltorch -lcaffe2 -lc10,)
 
 CC = $(call pkgconf, --variable=ccompiler $(PETSc.pc) $(ceed.pc))
 CFLAGS = -std=c99 \
@@ -47,12 +47,12 @@ CFLAGS = -std=c99 \
   $(OPT) $(OPT_EXAMPLES)
 CPPFLAGS = $(call pkgconf, --cflags-only-I $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)) \
   $(call pkgconf, --variable=cflags_dep $(PETSc.pc))
-CPPFLAGS += $(LT_INCPATH)
+#CPPFLAGS += $(LT_INCPATH)
 LDFLAGS = $(call pkgconf, --libs-only-L --libs-only-other $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc))
 LDFLAGS += -Wl,-rpath,$(SMARTREDIS_DIR)/lib64/
 LDFLAGS += $(patsubst -L%, $(call pkgconf, --variable=ldflag_rpath $(PETSc.pc))%, $(call pkgconf, --libs-only-L $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)))
 LDFLAGS += -L$(SMARTREDIS_DIR)/lib64/
-LDFLAGS += -L$(LT_LIBPATH)
+#LDFLAGS += -L$(LT_LIBPATH)
 LDLIBS = $(call pkgconf, --libs-only-l $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)) $(lsmartredis) $(ltorch) -lm
 
 OBJDIR := build
