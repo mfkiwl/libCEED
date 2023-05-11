@@ -168,6 +168,7 @@ PetscErrorCode IFunction_NS(TS ts, PetscReal t, Vec Q, Vec Q_dot, Vec G, void *u
   Vec          Q_loc = user->Q_loc, Q_dot_loc = user->Q_dot_loc, G_loc;
   PetscMemType q_mem_type, q_dot_mem_type, g_mem_type;
   PetscFunctionBeginUser;
+  PetscScalar tic, toc;
 
   // Get local vectors
   PetscCall(DMGetNamedLocalVector(user->dm, "ResidualLocal", &G_loc));
@@ -191,16 +192,22 @@ PetscErrorCode IFunction_NS(TS ts, PetscReal t, Vec Q, Vec Q_dot, Vec G, void *u
 
   // Apply CEED operator
   // like call to elmgmr, apply the op_ifunction
+  PetscCall(PetscTime(&tic));
   CeedOperatorApply(user->op_ifunction, user->q_ceed, user->g_ceed, CEED_REQUEST_IMMEDIATE);
+  PetscCall(PetscTime(&toc));
+  PetscCall(PetscPrintf(comm, "Ifunction apply time: %-7.5f\n", toc-tic));
 
   // Restore vectors
   PetscCall(VecReadC2P(user->q_ceed, q_mem_type, Q_loc));
   PetscCall(VecReadC2P(user->q_dot_ceed, q_dot_mem_type, Q_dot_loc));
   PetscCall(VecC2P(user->g_ceed, g_mem_type, G_loc));
 
+  PetscCall(PetscTime(&tic));
   if (user->app_ctx->sgs_model_type == SGS_MODEL_DATA_DRIVEN) {
     PetscCall(SGS_DD_ModelApplyIFunction(user, Q_loc, G_loc));
   }
+  PetscCall(PetscTime(&toc));
+  PetscCall(PetscPrintf(comm, "SGS DD Model Apply time: %-7.5f\n\n", toc-tic));
 
   // Local-to-Global
   PetscCall(VecZeroEntries(G));
@@ -495,8 +502,8 @@ PetscErrorCode TSSolve_NS(DM dm, User user, AppCtx app_ctx, Physics phys, Vec *Q
   }
   if (app_ctx->diff_filter_monitor) PetscCall(TSMonitorSet(*ts, TSMonitor_DifferentialFilter, user, NULL));
 
-  PetscCall(TSMonitorSet(*ts, TSMonitor_SGS_DD_Training, user, NULL));
-  PetscCall(TSSetPostStep(*ts, TSPostStep_SGS_DD_Training));
+  //PetscCall(TSMonitorSet(*ts, TSMonitor_SGS_DD_Training, user, NULL));
+  //PetscCall(TSSetPostStep(*ts, TSPostStep_SGS_DD_Training));
 
   // Solve
   PetscReal start_time;

@@ -73,8 +73,10 @@ CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_a
                                                     const CeedScalar viscosity, CeedScalar kmsgs_stress[6], SGS_DDModelContext sgsdd_ctx) {
   CeedScalar inputs[6], grad_velo_magnitude, eigenvectors[3][3], sgs_sframe_sym[6] = {0.};
 
+  // NB: commenting this line slows down code
   //ComputeSGS_DDAnisotropicInputs(grad_velo_aniso, km_A_ij, delta, viscosity, eigenvectors, inputs, &grad_velo_magnitude);
 
+  // Would inference with external library be done here as well
   DataDrivenInference(inputs, sgs_sframe_sym, sgsdd_ctx);
 
   //CeedScalar old_bounds[6][2] = {{0}};
@@ -83,9 +85,11 @@ CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_a
   //DenormalizeDDOutputs(sgs_sframe_sym, new_bounds, old_bounds);
 
   // Re-dimensionalize sgs_stress
+  // NB: commenting this line slows down code
   //ScaleN(sgs_sframe_sym, Square(delta) * Square(grad_velo_magnitude), 6);
 
-  //CeedScalar sgs_stress[3][3] = {{0.}};
+  // NB: commenting these lines slows down code
+  CeedScalar sgs_stress[3][3] = {{0.}};
   /*{  // Rotate SGS Stress back to physical frame, SGS_physical = E^T SGS_sframe E
     CeedScalar       Evec_sgs[3][3]   = {{0.}};
     const CeedScalar sgs_sframe[3][3] = {
@@ -97,6 +101,7 @@ CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_a
     MatMat3(Evec_sgs, eigenvectors, CEED_NOTRANSPOSE, CEED_NOTRANSPOSE, sgs_stress);
   }*/
 
+  // NB: commenting this line slows down code
   //KMPack(sgs_stress, kmsgs_stress);
 }
 
