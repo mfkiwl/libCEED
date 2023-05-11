@@ -72,16 +72,16 @@ CEED_QFUNCTION_HELPER void DataDrivenInference(const CeedScalar *inputs, CeedSca
 //CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(const CeedScalar grad_velo_aniso[3][3], const CeedScalar km_A_ij[6], const CeedScalar delta,
 //                                                    const CeedScalar viscosity, CeedScalar kmsgs_stress[6], SGS_DDModelContext sgsdd_ctx) {
 //CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(CeedScalar kmsgs_stress[6], SGS_DDModelContext sgsdd_ctx) {
-CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(CeedScalar qi[6], SGS_DDModelContext sgsdd_ctx) {
+CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(CeedScalar qi[6], CeedScalar km_sgs[6], SGS_DDModelContext sgsdd_ctx) {
   //CeedScalar inputs[6], grad_velo_magnitude, eigenvectors[3][3], sgs_sframe_sym[6] = {0.};
   //CeedScalar inputs[6], sgs_sframe_sym[6] = {1.};
-  CeedScalar sgs_sframe_sym[6] = {0.};
+  //CeedScalar sgs_sframe_sym[6] = {0.};
 
   //ComputeSGS_DDAnisotropicInputs(grad_velo_aniso, km_A_ij, delta, viscosity, eigenvectors, inputs, &grad_velo_magnitude);
 
   //DataDrivenInference(inputs, sgs_sframe_sym, sgsdd_ctx);
   //DataDrivenInference(kmsgs_stress, kmsgs_stress, sgsdd_ctx);
-  DataDrivenInference(qi, sgs_sframe_sym, sgsdd_ctx);
+  DataDrivenInference(qi, km_sgs, sgsdd_ctx);
 
   //CeedScalar old_bounds[6][2] = {{0}};
   //for (int j = 0; j < 6; j++) old_bounds[j][1] = 1;
@@ -131,11 +131,11 @@ CEED_QFUNCTION_HELPER int ComputeSGS_DDAnisotropicNodal(void *ctx, CeedInt Q, co
     //const CeedScalar km_A_ij[6] = {A_ij_delta[0][i], A_ij_delta[1][i], A_ij_delta[2][i], A_ij_delta[3][i], A_ij_delta[4][i], A_ij_delta[5][i]};
     //const CeedScalar delta      = A_ij_delta[6][i];
     //const State      s          = StateFromQi(gas, qi, x_i);
-    //CeedScalar       km_sgs[6];
+    CeedScalar       km_sgs[6];
 
     //ComputeSGS_DDAnisotropic(grad_velo_aniso, km_A_ij, delta, gas->mu / s.U.density, km_sgs, sgsdd_ctx);
     //ComputeSGS_DDAnisotropic(km_sgs, sgsdd_ctx);
-    ComputeSGS_DDAnisotropic(qi, sgsdd_ctx);
+    ComputeSGS_DDAnisotropic(qi, km_sgs, sgsdd_ctx);
 
     //for (int j = 0; j < 6; j++) v[j][i] = inv_multiplicity[i] * km_sgs[j];
   }
