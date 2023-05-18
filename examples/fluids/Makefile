@@ -35,11 +35,9 @@ endif
 
 # LibTorch
 USE_LIBTORCH ?=
-#$(info    USE_LIBTORCH is $(USE_LIBTORCH))
+IPEX_PATH ?=
 LT_INCPATH := $(if $(USE_LIBTORCH),$(shell python -c "import torch.utils.cpp_extension as C; print('-I' + str.join(' -I', C.include_paths()))"),)
-#$(info    LT_INCPATH is $(LT_INCPATH))
 LT_LIBPATH := $(if $(USE_LIBTORCH),$(shell python -c "import torch.utils.cpp_extension as C; print(C.include_paths()[0] + '/../')"),)
-#$(info    LT_LIBPATH is $(LT_LIBPATH))
 LT_USE_CUDA := $(if $(USE_LIBTORCH),$(shell python -c "import torch; print(torch.cuda.is_available())"),)
 ltorch := $(if $(USE_LIBTORCH),-ltorch -lc10,)
 
@@ -61,11 +59,16 @@ ifeq ($(USE_LIBTORCH),True)
     LDFLAGS += -L$(LT_LIBPATH)
     LDFLAGS += -Wl,-rpath,$(LT_LIBPATH)/lib/
 endif
+ifdef IPEX_PATH
+    LDFLAGS += -L${IPEX_PATH}/lib/
+    LDFLAGS += -Wl,-rpath,$(IPEX_PATH)/lib/
+    lipex = -lintel-ext-pt-gpu
+endif
 LDFLAGS += -Wl,--copy-dt-needed-entries
-LDLIBS = $(call pkgconf, --libs-only-l $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)) $(lsmartredis) $(ltorch) -lm
+LDLIBS = $(call pkgconf, --libs-only-l $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)) $(lsmartredis) $(ltorch) $(lipex) -lm
 
 CXX = $(call pkgconf, --variable=cxxcompiler $(PETSc.pc) $(ceed.pc))
-CXXFLAGS = -std=c++14 -Wno-deprecated
+CXXFLAGS = -std=c++14 -Wno-deprecated -Wno-tautological-compare
 
 OBJDIR := build
 SRCDIR := src

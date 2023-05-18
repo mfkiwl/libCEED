@@ -175,6 +175,7 @@ typedef struct {
   PetscInt             num_comp_sgs;
   OperatorApplyContext op_nodal_evaluation_ctx, op_sgs_apply_ctx;
   CeedVector           sgs_nodal_ceed;
+  void *               torch_model;
 } *SGS_DD_Data;
 
 typedef struct {
@@ -462,7 +463,6 @@ PetscErrorCode OutflowBCSetup(ProblemData *problem, DM dm, void *ctx, NewtonianI
 // -----------------------------------------------------------------------------
 // Differential Filtering Functions
 // -----------------------------------------------------------------------------
-
 PetscErrorCode DifferentialFilterSetup(Ceed ceed, User user, CeedData ceed_data, ProblemData *problem);
 PetscErrorCode DifferentialFilterDataDestroy(DiffFilterData diff_filter);
 PetscErrorCode TSMonitor_DifferentialFilter(TS ts, PetscInt steps, PetscReal solution_time, Vec Q, void *ctx);
@@ -476,7 +476,14 @@ PetscErrorCode SmartSimSetup(User user);
 PetscErrorCode SGS_DD_TrainingSetup(Ceed ceed, User user, CeedData ceed_data, ProblemData *problem);
 PetscErrorCode TSMonitor_SGS_DD_Training(TS ts, PetscInt steps, PetscReal solution_time, Vec Q, void *ctx);
 PetscErrorCode TSPostStep_SGS_DD_Training(TS ts);
-int create_tensor();
 
+
+// -----------------------------------------------------------------------------
+// LibTorch functions for inference
+// -----------------------------------------------------------------------------
+int create_tensor();
+int load_and_run();
+void upload_model(void** model_ptr);
+void torch_inf(void* model_ptr);
 
 #endif  // libceed_fluids_examples_navier_stokes_h

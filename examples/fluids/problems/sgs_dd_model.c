@@ -223,8 +223,8 @@ PetscErrorCode SGS_DD_ModelApplyIFunction(User user, const Vec Q_loc, Vec G_loc)
   PetscCall(VecP2C(Q_loc, &q_mem_type, user->q_ceed));  // q_ceed is an implicit input
 
   PetscCall(ApplyCeedOperatorGlobalToLocal(VelocityGradient, SGSNodal_loc, sgs_dd_data->op_nodal_evaluation_ctx));
-  create_tensor();
-
+  //create_tensor();
+  torch_inf(sgs_dd_data->torch_model);
 
   PetscCall(VecC2P(user->q_ceed, q_mem_type, Q_loc));
   PetscCall(VecP2C(SGSNodal_loc, &sgs_nodal_mem_type, sgs_dd_data->sgs_nodal_ceed));  // sgs_nodal_ceed is an implicit input
@@ -333,6 +333,9 @@ PetscErrorCode SGS_DD_ModelSetup(Ceed ceed, User user, CeedData ceed_data, Probl
   // -- Create DM for storing SGS tensor at nodes
   PetscCall(PetscNew(&user->sgs_dd_data));
   PetscCall(SGS_DD_ModelCreateDM(user->dm, &user->sgs_dd_data->dm_sgs, user->app_ctx->degree, &user->sgs_dd_data->num_comp_sgs));
+
+  // Upload Torch model and save a pointer to it
+  upload_model(&user->sgs_dd_data->torch_model);
 
   PetscCall(PetscNew(&sgs_dd_setup_data));
 
