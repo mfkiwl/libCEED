@@ -20,7 +20,6 @@
 #include "sgs_dd_utils.h"
 #include "utils.h"
 #include "utils_eigensolver_jacobi.h"
-//#include "torch.h"
 
 typedef struct SGS_DD_ModelContext_ *SGS_DDModelContext;
 struct SGS_DD_ModelContext_ {
@@ -83,8 +82,6 @@ CEED_QFUNCTION_HELPER void ComputeSGS_DDAnisotropic(CeedScalar qi[6], CeedScalar
   //DataDrivenInference(inputs, sgs_sframe_sym, sgsdd_ctx);
   //DataDrivenInference(kmsgs_stress, kmsgs_stress, sgsdd_ctx);
   DataDrivenInference(qi, km_sgs, sgsdd_ctx);
-
-  //create_tensor()
 
   //CeedScalar old_bounds[6][2] = {{0}};
   //for (int j = 0; j < 6; j++) old_bounds[j][1] = 1;

@@ -41,7 +41,7 @@ LT_INCPATH := $(if $(USE_LIBTORCH),$(shell python -c "import torch.utils.cpp_ext
 LT_LIBPATH := $(if $(USE_LIBTORCH),$(shell python -c "import torch.utils.cpp_extension as C; print(C.include_paths()[0] + '/../')"),)
 #$(info    LT_LIBPATH is $(LT_LIBPATH))
 LT_USE_CUDA := $(if $(USE_LIBTORCH),$(shell python -c "import torch; print(torch.cuda.is_available())"),)
-ltorch := $(if $(USE_LIBTORCH),-ltorch -lcaffe2 -lc10,)
+ltorch := $(if $(USE_LIBTORCH),-ltorch -lc10,)
 
 CC = $(call pkgconf, --variable=ccompiler $(PETSc.pc) $(ceed.pc))
 CFLAGS = -std=c99 \
@@ -59,17 +59,21 @@ LDFLAGS += $(patsubst -L%, $(call pkgconf, --variable=ldflag_rpath $(PETSc.pc))%
 LDFLAGS += -L$(SMARTREDIS_DIR)/lib64/
 ifeq ($(USE_LIBTORCH),True)
     LDFLAGS += -L$(LT_LIBPATH)
-    LSFLAGS += -Wl,-rpath,$(LT_LIBPATH)/lib/ $(ltorch)
+    LDFLAGS += -Wl,-rpath,$(LT_LIBPATH)/lib/
 endif
-LDLIBS = $(call pkgconf, --libs-only-l $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)) $(lsmartredis) -lm
+LDFLAGS += -Wl,--copy-dt-needed-entries
+LDLIBS = $(call pkgconf, --libs-only-l $(PETSc.pc) $(ceed.pc) $(hiredis.pc) $(redis++.pc)) $(lsmartredis) $(ltorch) -lm
 
+CXX = $(call pkgconf, --variable=cxxcompiler $(PETSc.pc) $(ceed.pc))
+CXXFLAGS = -std=c++14 -Wno-deprecated
 
 OBJDIR := build
 SRCDIR := src
 PROBLEMDIR := problems
 
 src.c := navierstokes.c $(sort $(wildcard $(PROBLEMDIR)/*.c)) $(sort $(wildcard $(SRCDIR)/*.c))
-src.o = $(src.c:%.c=$(OBJDIR)/%.o)
+src.cpp := $(sort $(wildcard $(PROBLEMDIR)/*.cpp))
+src.o = $(src.c:%.c=$(OBJDIR)/%.o) $(src.cpp:%.cpp=$(OBJDIR)/%.o)
 
 ifeq ($(SMARTREDIS_DIR),)
 	src.c := $(filter-out $(SRCDIR)/smartsim.c $(PROBLEMDIR)/sgs_dd_training.c,$(src.c))
@@ -90,6 +94,8 @@ quiet ?= $($(1))
 
 $(OBJDIR)/%.o : %.c | $$(@D)/.DIR
 	$(call quiet,CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(abspath $<)
+$(OBJDIR)/%.o : %.cpp | $$(@D)/.DIR
+	$(call quiet,CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $(abspath $<)
 
 # Rules for building the examples
 #%: %.c

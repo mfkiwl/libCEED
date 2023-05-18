@@ -476,5 +476,7 @@ PetscErrorCode SmartSimSetup(User user);
 PetscErrorCode SGS_DD_TrainingSetup(Ceed ceed, User user, CeedData ceed_data, ProblemData *problem);
 PetscErrorCode TSMonitor_SGS_DD_Training(TS ts, PetscInt steps, PetscReal solution_time, Vec Q, void *ctx);
 PetscErrorCode TSPostStep_SGS_DD_Training(TS ts);
+int create_tensor();
+
 
 #endif  // libceed_fluids_examples_navier_stokes_h
