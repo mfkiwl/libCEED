@@ -700,6 +700,44 @@ int CeedHouseholderApplyQ(CeedScalar *mat_A, const CeedScalar *mat_Q, const Ceed
 }
 
 /**
+  @brief Return pseudoinverse of a matrix
+
+  @param[in]     ceed Ceed context for error handling
+  @param[in]     mat  Row-major matrix to be factorized in place
+  @param[in]     m    Number of rows
+  @param[in]     n    Number of columns
+  @param[out]    mat_pinv  Row-major pseudoinverse matrix
+
+  @return An error code: 0 - success, otherwise - failure
+
+  @ref Utility
+**/
+int CeedMatrixPseudoinverse(Ceed ceed, CeedScalar *mat, CeedInt m, CeedInt n, CeedScalar *mat_pinv) {
+  CeedScalar *tau, *I;
+
+  CeedCall(CeedCalloc(m * n, &I));
+  CeedCall(CeedCalloc(m, &tau));
+  // -- QR Factorization, mat = Q R
+  CeedCall(CeedQRFactorization(ceed, mat, tau, m, n));
+  // -- mat_pinv = R_inv Q^T
+  for (CeedInt i = 0; i < m; i++)
+    for (CeedInt j = 0; j < n; j++) I[i * m + j] = 1.0;
+  // ---- Apply R_inv, mat_pinv = I R_inv
+  for (CeedInt i = 0; i < m; i++) {  // Row i
+    mat_pinv[m * i] = I[m * i] / mat[0];
+    for (CeedInt j = 1; j < n; j++) {  // Column j
+      mat_pinv[j + m * i] = I[j + m * i];
+      for (CeedInt k = 0; k < j; k++) mat_pinv[j + m * i] -= mat[j + m * k] * mat_pinv[k + m * i];
+      mat_pinv[j + m * i] /= mat[j + n * j];
+    }
+  }
+  // ---- Apply Q^T, mat_pinv = R_inv Q^T
+  CeedCall(CeedHouseholderApplyQ(mat_pinv, mat, tau, CEED_NOTRANSPOSE, m, n, n, 1, m));
+
+  return CEED_ERROR_SUCCESS;
+}
+
+/**
   @brief Return symmetric Schur decomposition of the symmetric matrix mat via symmetric QR factorization
 
   @param[in]     ceed   Ceed context for error handling
