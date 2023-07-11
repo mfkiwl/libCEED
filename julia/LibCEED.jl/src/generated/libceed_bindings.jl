@@ -1410,6 +1410,10 @@ function CeedHouseholderApplyQ(mat_A, mat_Q, tau, t_mode, m, n, k, row, col)
     ccall((:CeedHouseholderApplyQ, libceed), Cint, (Ptr{CeedScalar}, Ptr{CeedScalar}, Ptr{CeedScalar}, CeedTransposeMode, CeedInt, CeedInt, CeedInt, CeedInt, CeedInt), mat_A, mat_Q, tau, t_mode, m, n, k, row, col)
 end
 
+function CeedMatrixPseudoinverse(ceed, mat, m, n, mat_pinv)
+    ccall((:CeedMatrixPseudoinverse, libceed), Cint, (Ceed, Ptr{CeedScalar}, CeedInt, CeedInt, Ptr{CeedScalar}), ceed, mat, m, n, mat_pinv)
+end
+
 function CeedSymmetricSchurDecomposition(ceed, mat, lambda, n)
     ccall((:CeedSymmetricSchurDecomposition, libceed), Cint, (Ceed, Ptr{CeedScalar}, Ptr{CeedScalar}, CeedInt), ceed, mat, lambda, n)
 end
