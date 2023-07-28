@@ -135,6 +135,14 @@ PetscErrorCode SetUpDM(DM dm, ProblemData *problem, PetscInt degree, PetscInt q_
       PetscCall(PetscSectionSetComponentName(section, 0, 3, "Velocity Z"));
       PetscCall(PetscSectionSetComponentName(section, 0, 4, "Temperature"));
       break;
+
+    case STATEVAR_ENTROPY:
+      PetscCall(PetscSectionSetComponentName(section, 0, 0, "Chemical Potential"));
+      PetscCall(PetscSectionSetComponentName(section, 0, 1, "Velocity X"));
+      PetscCall(PetscSectionSetComponentName(section, 0, 2, "Velocity Y"));
+      PetscCall(PetscSectionSetComponentName(section, 0, 3, "Velocity Z"));
+      PetscCall(PetscSectionSetComponentName(section, 0, 4, "Temperature Inv"));
+      break;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }

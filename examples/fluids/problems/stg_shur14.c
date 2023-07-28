@@ -355,6 +355,7 @@ PetscErrorCode StrongSTGbcFunc(PetscInt dim, PetscReal time, const PetscReal x[]
   bcval[1] = rho * u[0];
   bcval[2] = rho * u[1];
   bcval[3] = rho * u[2];
+  if (Nc == 5) bcval[4] = -1. / (cv * theta0);
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -362,7 +363,7 @@ PetscErrorCode SetupStrongSTG(DM dm, SimpleBC bc, ProblemData *problem, Physics 
   DMLabel label;
   PetscFunctionBeginUser;
 
-  PetscInt comps[5], num_comps = 4;
+  PetscInt comps[5], num_comps = 4 + (phys->state_var == STATEVAR_ENTROPY);
   switch (phys->state_var) {
     case STATEVAR_CONSERVATIVE:
       // {0,1,2,3} for rho, rho*u, rho*v, rho*w
@@ -372,6 +373,10 @@ PetscErrorCode SetupStrongSTG(DM dm, SimpleBC bc, ProblemData *problem, Physics 
     case STATEVAR_PRIMITIVE:
       // {1,2,3,4} for u, v, w, T
       for (int i = 0; i < 4; i++) comps[i] = i + 1;
+      break;
+
+    case STATEVAR_ENTROPY:
+      for (int i = 0; i < 5; i++) comps[i] = i;
       break;
   }
 
