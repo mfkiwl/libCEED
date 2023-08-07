@@ -61,20 +61,20 @@ static PetscErrorCode CheckEntropyWithTolerance(StateEntropy sV, StateEntropy aV
                                                 PetscReal rtol_velocity, PetscReal rtol_temperature_inv) {
   PetscFunctionBeginUser;
   StateEntropy eV;  // relative error
-  eV.chemical_potential = (aV.chemical_potential - bV.chemical_potential) / (fabs(sV.chemical_potential) > 1e-16 ? sV.chemical_potential : 1);
-  PetscScalar u         = sqrt(Square(sV.velocity[0]) + Square(sV.velocity[1]) + Square(sV.velocity[2]));
-  for (int j = 0; j < 3; j++) eV.velocity[j] = (aV.velocity[j] - bV.velocity[j]) / (fabs(u) > 1e-16 ? u : 1);
-  eV.temperature = (aV.temperature - bV.temperature) / (fabs(sV.temperature) > 1e-16 ? sV.temperature : 1);
-  if (fabs(eV.chemical_potential) > rtol_v1) {
-    printf("%s: V1 error %g (expected %g, got %g)\n", name, eV.chemical_potential, sV.chemical_potential, aV.chemical_potential);
+  eV.S_density  = (aV.S_density - bV.S_density) / (fabs(sV.S_density) > 1e-16 ? sV.S_density : 1);
+  PetscScalar u = sqrt(Square(sV.S_momentum[0]) + Square(sV.S_momentum[1]) + Square(sV.S_momentum[2]));
+  for (int j = 0; j < 3; j++) eV.S_momentum[j] = (aV.S_momentum[j] - bV.S_momentum[j]) / (fabs(u) > 1e-16 ? u : 1);
+  eV.S_energy = (aV.S_energy - bV.S_energy) / (fabs(sV.S_energy) > 1e-16 ? sV.S_energy : 1);
+  if (fabs(eV.S_density) > rtol_v1) {
+    printf("%s: V1 error %g (expected %g, got %g)\n", name, eV.S_density, sV.S_density, aV.S_density);
   }
   for (int j = 0; j < 3; j++) {
-    if (fabs(eV.velocity[j]) > rtol_velocity) {
-      printf("%s: velocity[%d] error %g (expected %g, got %g)\n", name, j, eV.velocity[j], sV.velocity[j], aV.velocity[j]);
+    if (fabs(eV.S_momentum[j]) > rtol_velocity) {
+      printf("%s: S_momentum[%d] error %g (expected %g, got %g)\n", name, j, eV.S_momentum[j], sV.S_momentum[j], aV.S_momentum[j]);
     }
   }
-  if (fabs(eV.temperature) > rtol_temperature_inv) {
-    printf("%s: temperature error %g (expected %g, got %g)\n", name, eV.temperature, sV.temperature, aV.temperature);
+  if (fabs(eV.S_energy) > rtol_temperature_inv) {
+    printf("%s: S_energy error %g (expected %g, got %g)\n", name, eV.S_energy, sV.S_energy, aV.S_energy);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -86,7 +86,7 @@ static PetscErrorCode UnitTests_Newtonian(User user, NewtonianIdealGasContext ga
   const CeedScalar kg = units->kilogram, m = units->meter, sec = units->second, K = units->Kelvin;
   PetscFunctionBeginUser;
   const CeedScalar T   = 200 * K;
-  const CeedScalar rho = 1.2 * kg / (m * m * m), u_base = 40 * m / sec;
+  const CeedScalar rho = 1.2 * kg / Cube(m), u_base = 40 * m / sec;
   const CeedScalar P           = (HeatCapacityRatio(gas) - 1) * rho * gas->cv * T;
   const CeedScalar u[3]        = {u_base, u_base * 1.1, u_base * 1.2};
   const CeedScalar e_kinetic   = 0.5 * Dot3(u, u);
@@ -122,9 +122,9 @@ static PetscErrorCode UnitTests_Newtonian(User user, NewtonianIdealGasContext ga
       for (int j = 0; j < 3; j++) dx[j] = (1 + eps * (i == 5 + j)) * x[j];
       State        t = StateFromU(gas, dU, dx);
       StateEntropy dV;
-      dV.chemical_potential = (t.V.chemical_potential - s.V.chemical_potential) / eps;
-      for (int j = 0; j < 3; j++) dV.velocity[j] = (t.V.velocity[j] - s.V.velocity[j]) / eps;
-      dV.temperature = (t.V.temperature - s.V.temperature) / eps;
+      dV.S_density = (t.V.S_density - s.V.S_density) / eps;
+      for (int j = 0; j < 3; j++) dV.S_momentum[j] = (t.V.S_momentum[j] - s.V.S_momentum[j]) / eps;
+      dV.S_energy = (t.V.S_energy - s.V.S_energy) / eps;
       char buf[128];
       snprintf(buf, sizeof buf, "U->V: StateFromU_fwd i=%d", i);
       PetscCall(CheckEntropyWithTolerance(dV, ds.V, dV, buf, 5 * rtol, rtol, rtol));
@@ -142,9 +142,9 @@ static PetscErrorCode UnitTests_Newtonian(User user, NewtonianIdealGasContext ga
       for (int j = 0; j < 3; j++) dx[j] = (1 + eps * (i == 5 + j)) * x[j];
       State        t = StateFromY(gas, dY, dx);
       StateEntropy dV;
-      dV.chemical_potential = (t.V.chemical_potential - s.V.chemical_potential) / eps;
-      for (int j = 0; j < 3; j++) dV.velocity[j] = (t.V.velocity[j] - s.V.velocity[j]) / eps;
-      dV.temperature = (t.V.temperature - s.V.temperature) / eps;
+      dV.S_density = (t.V.S_density - s.V.S_density) / eps;
+      for (int j = 0; j < 3; j++) dV.S_momentum[j] = (t.V.S_momentum[j] - s.V.S_momentum[j]) / eps;
+      dV.S_energy = (t.V.S_energy - s.V.S_energy) / eps;
       char buf[128];
       snprintf(buf, sizeof buf, "Y->V: StateFromY_fwd i=%d", i);
       PetscCall(CheckEntropyWithTolerance(dV, ds.V, dV, buf, rtol, rtol, rtol));

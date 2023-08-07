@@ -52,9 +52,9 @@ typedef struct {
 } StatePrimitive;
 
 typedef struct {
-  CeedScalar chemical_potential;
-  CeedScalar velocity[3];
-  CeedScalar temperature;
+  CeedScalar S_density;
+  CeedScalar S_momentum[3];
+  CeedScalar S_energy;
 } StateEntropy;
 
 typedef struct SetupContext_ *SetupContext;

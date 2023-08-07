@@ -80,7 +80,6 @@ PetscErrorCode FreestreamBCSetup(ProblemData *problem, DM dm, void *ctx, Newtoni
           break;
       }
       break;
-
     case STATEVAR_ENTROPY:
       switch (riemann) {
         case RIEMANN_HLL:
