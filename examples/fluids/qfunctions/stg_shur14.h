@@ -544,10 +544,8 @@ CEED_QFUNCTION(STGShur14_Inflow_StrongQF)(void *ctx, CeedInt Q, const CeedScalar
   const CeedScalar       time      = stg_ctx->time;
   const CeedScalar       theta0    = stg_ctx->theta0;
   const CeedScalar       P0        = stg_ctx->P0;
-  const CeedScalar       gamma     = HeatCapacityRatio(&stg_ctx->newtonian_ctx);
   const CeedScalar       Rd        = GasConstant(&stg_ctx->newtonian_ctx);
   const CeedScalar       rho       = P0 / (Rd * theta0);
-  const CeedScalar       entropy   = log(P0) - gamma * log(rho);
   const CeedScalar       nu        = stg_ctx->newtonian_ctx.mu / rho;
 
   CeedPragmaSIMD for (CeedInt i = 0; i < Q; i++) {
@@ -574,8 +572,6 @@ CEED_QFUNCTION(STGShur14_Inflow_StrongQF)(void *ctx, CeedInt Q, const CeedScalar
       for (CeedInt j = 0; j < 3; j++) u[j] = ubar[j];
     }
 
-    const CeedScalar e_kinetic = 0.5 * Dot3(u, u);
-
     switch (stg_ctx->newtonian_ctx.state_var) {
       case STATEVAR_CONSERVATIVE:
         bcval[0][i] = scale[i] * rho;
@@ -594,7 +590,7 @@ CEED_QFUNCTION(STGShur14_Inflow_StrongQF)(void *ctx, CeedInt Q, const CeedScalar
         break;
 
       case STATEVAR_ENTROPY:
-        bcval[0][i] = scale[i] * ((gamma - entropy) / (gamma - 1) - e_kinetic / (Rd * theta0));
+        bcval[0][i] = 0;
         bcval[1][i] = scale[i] * u[0] / (Rd * theta0);
         bcval[2][i] = scale[i] * u[1] / (Rd * theta0);
         bcval[3][i] = scale[i] * u[2] / (Rd * theta0);
