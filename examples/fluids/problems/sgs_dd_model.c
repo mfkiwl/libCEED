@@ -122,7 +122,8 @@ PetscErrorCode SGS_DD_ModelSetupNodalEvaluation(Ceed ceed, User user, CeedData c
                                                       &qf_sgs_dd_nodal));
       break;
     case STATEVAR_ENTROPY:
-      CeedQFunctionCreateInterior(ceed, 1, ComputeSGS_DDAnisotropicNodal_Entropy, ComputeSGS_DDAnisotropicNodal_Entropy_loc, &qf_sgs_dd_nodal);
+      PetscCallCeed(ceed, CeedQFunctionCreateInterior(ceed, 1, ComputeSGS_DDAnisotropicNodal_Entropy, ComputeSGS_DDAnisotropicNodal_Entropy_loc,
+                                                      &qf_sgs_dd_nodal));
       break;
     default:
       SETERRQ(PetscObjectComm((PetscObject)user->dm), PETSC_ERR_SUP,
@@ -194,7 +195,8 @@ PetscErrorCode SGS_ModelSetupNodalIFunction(Ceed ceed, User user, CeedData ceed_
           ceed, CeedQFunctionCreateInterior(ceed, 1, IFunction_NodalSubgridStress_Conserv, IFunction_NodalSubgridStress_Conserv_loc, &qf_sgs_apply));
       break;
     case STATEVAR_ENTROPY:
-      CeedQFunctionCreateInterior(ceed, 1, IFunction_NodalSubgridStress_Entropy, IFunction_NodalSubgridStress_Entropy_loc, &qf_sgs_apply);
+      PetscCallCeed(
+          ceed, CeedQFunctionCreateInterior(ceed, 1, IFunction_NodalSubgridStress_Entropy, IFunction_NodalSubgridStress_Entropy_loc, &qf_sgs_apply));
       break;
     default:
       SETERRQ(PetscObjectComm((PetscObject)user->dm), PETSC_ERR_SUP, "Nodal SGS evaluation not available for chosen state variable");
