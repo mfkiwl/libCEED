@@ -1,11 +1,16 @@
-#include <stdio.h>
-#include <sys/time.h>
+// Copyright (c) 2017-2022, Lawrence Livermore National Security, LLC and other CEED contributors.
+// All Rights Reserved. See the top-level LICENSE and NOTICE files for details.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This file is part of CEED:  http://github.com/ceed
+
+#include "ceed-magma-gemm-selector.h"
 
 #include <array>
 #include <limits>
 #include <vector>
 
-#include "ceed-magma.h"
 #include "tuning/indices.h"
 #ifdef CEED_MAGMA_USE_HIP
 #include "tuning/mi100.h"
@@ -20,7 +25,7 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-static void *gemm_selector_get_data(int gpu_arch, char precision, char transA) {
+static inline void *gemm_selector_get_data(int gpu_arch, char precision, char transA) {
 // a default
 #ifdef CEED_MAGMA_USE_HIP
   void *data = (void *)&sgemm_nn_mi250x;
@@ -99,8 +104,7 @@ void gemm_selector(int gpu_arch, char precision, char transA, int m, int n, int 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-static void *nontensor_rtc_get_data(int gpu_arch, char precision, CeedEvalMode emode, CeedTransposeMode tmode) {
-// a default
+static inline void *nontensor_rtc_get_data(int gpu_arch, char precision, CeedEvalMode emode, CeedTransposeMode tmode) {
 #ifdef CEED_MAGMA_USE_HIP
   void *data = (void *)&dinterp_n_mi250x;
 #else
@@ -110,13 +114,13 @@ static void *nontensor_rtc_get_data(int gpu_arch, char precision, CeedEvalMode e
 #ifdef CEED_MAGMA_USE_HIP
   if (emode == CEED_EVAL_INTERP) {
     data = (tmode == CEED_TRANSPOSE) ? (void *)&dinterp_t_mi250x : (void *)&dinterp_n_mi250x;
-  } else if (emode == CEED_EVAL_GRAD) {
+  } else {
     data = (tmode == CEED_TRANSPOSE) ? (void *)&dgrad_t_mi250x : (void *)&dgrad_n_mi250x;
   }
 #else
   if (emode == CEED_EVAL_INTERP) {
     data = (tmode == CEED_TRANSPOSE) ? (void *)&dinterp_t_a100 : (void *)&dinterp_n_a100;
-  } else if (emode == CEED_EVAL_GRAD) {
+  } else {
     data = (tmode == CEED_TRANSPOSE) ? (void *)&dgrad_t_a100 : (void *)&dgrad_n_a100;
   }
 #endif
