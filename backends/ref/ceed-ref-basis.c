@@ -109,7 +109,8 @@ static int CeedBasisApply_Ref(CeedBasis basis, CeedInt num_elem, CeedTransposeMo
           }
           // Grad to quadrature points (NoTranspose)
           //  or Interpolate to nodes (Transpose)
-          P = Q_1d, Q = Q_1d;
+          P = Q_1d;
+          Q = Q_1d;
           if (t_mode == CEED_TRANSPOSE) {
             P = Q_1d;
             Q = P_1d;

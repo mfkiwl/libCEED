@@ -25,53 +25,41 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-static inline void *gemm_selector_get_data(int gpu_arch, char precision, char transA) {
-// a default
 #ifdef CEED_MAGMA_USE_HIP
-  void *data = (void *)&sgemm_nn_mi250x;
-#else
-  void *data = (void *)&sgemm_nn_a100;
-#endif
-
-#ifdef CEED_MAGMA_USE_HIP
+static inline auto gemm_selector_get_data(int gpu_arch, char precision, char transA) -> decltype(dgemm_nn_mi250x) {
   if (gpu_arch >= 910) {
     // gfx90a or newer
-    data = (precision == 's') ? ((transA == 'n') ? (void *)&sgemm_nn_mi250x : (void *)&sgemm_tn_mi250x)
-                              : ((transA == 'n') ? (void *)&dgemm_nn_mi250x : (void *)&dgemm_tn_mi250x);
+    return (precision == 's') ? ((transA == 'n') ? sgemm_nn_mi250x : sgemm_tn_mi250x) : ((transA == 'n') ? dgemm_nn_mi250x : dgemm_tn_mi250x);
   } else {
     // gfx908 or older
-    data = (precision == 's') ? ((transA == 'n') ? (void *)&sgemm_nn_mi100 : (void *)&sgemm_tn_mi100)
-                              : ((transA == 'n') ? (void *)&dgemm_nn_mi100 : (void *)&dgemm_tn_mi100);
+    return (precision == 's') ? ((transA == 'n') ? sgemm_nn_mi100 : sgemm_tn_mi100) : ((transA == 'n') ? dgemm_nn_mi100 : dgemm_tn_mi100);
   }
+}
 #else
+static inline auto gemm_selector_get_data(int gpu_arch, char precision, char transA) -> decltype(dgemm_nn_a100) {
   if (gpu_arch >= 800) {
     // sm80 or newer
-    data = (precision == 's') ? ((transA == 'n') ? (void *)&sgemm_nn_a100 : (void *)&sgemm_tn_a100)
-                              : ((transA == 'n') ? (void *)&dgemm_nn_a100 : (void *)&dgemm_tn_a100);
+    return (precision == 's') ? ((transA == 'n') ? sgemm_nn_a100 : sgemm_tn_a100) : ((transA == 'n') ? dgemm_nn_a100 : dgemm_tn_a100);
   } else {
     // sm70 or older
-    data = (precision == 's') ? ((transA == 'n') ? (void *)&sgemm_nn_v100 : (void *)&sgemm_tn_v100)
-                              : ((transA == 'n') ? (void *)&dgemm_nn_v100 : (void *)&dgemm_tn_v100);
+    return (precision == 's') ? ((transA == 'n') ? sgemm_nn_v100 : sgemm_tn_v100) : ((transA == 'n') ? dgemm_nn_v100 : dgemm_tn_v100);
   }
-#endif
-
-  return data;
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 void gemm_selector(int gpu_arch, char precision, char transA, int m, int n, int k, int *nbatch, int *use_magma) {
-  // defaults
-  *nbatch                                            = n;
-  *use_magma                                         = 0;
-  std::vector<std::array<int, RECORD_LENGTH> > *data = NULL;
-  data = (std::vector<std::array<int, RECORD_LENGTH> > *)gemm_selector_get_data(gpu_arch, precision, transA);
+  *nbatch    = n;
+  *use_magma = 0;
 
-  int    ir   = -1;
-  double norm = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < data->size(); i++) {
-    int im = (*data)[i][M_INDEX];
-    int in = (*data)[i][N_INDEX];
-    int ik = (*data)[i][K_INDEX];
+  const auto &data = gemm_selector_get_data(gpu_arch, precision, transA);
+  int         ir   = -1;
+  double      norm = std::numeric_limits<double>::max();
+
+  for (size_t i = 0; i < data.size(); i++) {
+    int im = data[i][M_INDEX];
+    int in = data[i][N_INDEX];
+    int ik = data[i][K_INDEX];
 
     double mdiff = (double)(im - m);
     double ndiff = (double)(in - n);
@@ -92,57 +80,50 @@ void gemm_selector(int gpu_arch, char precision, char transA, int m, int n, int 
   }
 
   if (ir >= 0) {
-    *use_magma = (*data)[ir][USE_MAGMA_INDEX];
     // if the closest match indicates that n = nbatch,
     // that means calling the regular non-batch gemm.
     // So nbatch is set to n instead of the 'nbatch'
     // entry of the matching record
-    int n_      = (*data)[ir][N_INDEX];
-    int nbatch_ = (*data)[ir][N_BATCH_INDEX];
+    int n_      = data[ir][N_INDEX];
+    int nbatch_ = data[ir][N_BATCH_INDEX];
     *nbatch     = (n_ == nbatch_) ? n : nbatch_;
+    *use_magma  = data[ir][USE_MAGMA_INDEX];
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-static inline void *nontensor_rtc_get_data(int gpu_arch, char precision, CeedEvalMode emode, CeedTransposeMode tmode) {
 #ifdef CEED_MAGMA_USE_HIP
-  void *data = (void *)&dinterp_n_mi250x;
-#else
-  void *data = (void *)&dinterp_n_a100;
-#endif
-
-#ifdef CEED_MAGMA_USE_HIP
-  if (emode == CEED_EVAL_INTERP) {
-    data = (tmode == CEED_TRANSPOSE) ? (void *)&dinterp_t_mi250x : (void *)&dinterp_n_mi250x;
+static inline auto nontensor_rtc_get_data(int gpu_arch, char transA, int qcomp) -> decltype(dinterp_n_mi250x) {
+  if (qcomp == 1) {
+    return (transA == 'n') ? dinterp_n_mi250x : dinterp_t_mi250x;
   } else {
-    data = (tmode == CEED_TRANSPOSE) ? (void *)&dgrad_t_mi250x : (void *)&dgrad_n_mi250x;
+    return (transA == 'n') ? dgrad_n_mi250x : dgrad_t_mi250x;
   }
-#else
-  if (emode == CEED_EVAL_INTERP) {
-    data = (tmode == CEED_TRANSPOSE) ? (void *)&dinterp_t_a100 : (void *)&dinterp_n_a100;
-  } else {
-    data = (tmode == CEED_TRANSPOSE) ? (void *)&dgrad_t_a100 : (void *)&dgrad_n_a100;
-  }
-#endif
-
-  return data;
 }
+#else
+static inline auto nontensor_rtc_get_data(int gpu_arch, char transA, int qcomp) -> decltype(dinterp_n_a100) {
+  if (qcomp == 1) {
+    return (transA == 'n') ? dinterp_n_a100 : dinterp_t_a100;
+  } else {
+    return (transA == 'n') ? dgrad_n_a100 : dgrad_t_a100;
+  }
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
-CeedInt nontensor_rtc_get_nb(int gpu_arch, char precision, CeedEvalMode emode, CeedTransposeMode tmode, int P_, int N, int Q_) {
-  CeedInt P  = (tmode == CEED_TRANSPOSE) ? P_ : Q_;
-  CeedInt Q  = (tmode == CEED_TRANSPOSE) ? Q_ : P_;
+CeedInt nontensor_rtc_get_nb(int gpu_arch, char transA, int qcomp, int P_, int N, int Q_) {
+  CeedInt P  = (transA == 'n') ? P_ : Q_;
+  CeedInt Q  = (transA == 'n') ? Q_ : P_;
   CeedInt NB = 1;
 
-  std::vector<std::array<int, RECORD_LENGTH_RTC> > *data = NULL;
-  data = (std::vector<std::array<int, RECORD_LENGTH_RTC> > *)nontensor_rtc_get_data(gpu_arch, precision, emode, tmode);
+  const auto &data = nontensor_rtc_get_data(gpu_arch, transA, qcomp);
+  int         ir   = -1;
+  double      norm = std::numeric_limits<double>::max();
 
-  int    ir   = -1;
-  double norm = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < data->size(); i++) {
-    int ip = (*data)[i][M_INDEX_RTC];
-    int in = (*data)[i][N_INDEX_RTC];
-    int iq = (*data)[i][K_INDEX_RTC];
+  for (size_t i = 0; i < data.size(); i++) {
+    int ip = data[i][M_INDEX_RTC];
+    int in = data[i][N_INDEX_RTC];
+    int iq = data[i][K_INDEX_RTC];
 
     double pdiff = (double)(ip - P);
     double ndiff = (double)(in - N);
@@ -162,7 +143,7 @@ CeedInt nontensor_rtc_get_nb(int gpu_arch, char precision, CeedEvalMode emode, C
   }
 
   if (ir >= 0) {
-    NB = (*data)[ir][NB_INDEX_RTC];
+    NB = data[ir][NB_INDEX_RTC];
   }
 
   return NB;

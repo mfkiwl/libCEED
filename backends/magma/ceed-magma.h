@@ -57,22 +57,27 @@ typedef struct {
 } CeedBasis_Magma;
 
 typedef struct {
-  CeedMagmaModule   module[MAGMA_NONTENSOR_KERNEL_INSTANCES];
+  CeedMagmaModule   module_weight, module_interp[MAGMA_NONTENSOR_KERNEL_INSTANCES];
   CeedMagmaFunction Interp[MAGMA_NONTENSOR_KERNEL_INSTANCES];
   CeedMagmaFunction InterpTranspose[MAGMA_NONTENSOR_KERNEL_INSTANCES];
-  CeedMagmaFunction Grad[MAGMA_NONTENSOR_KERNEL_INSTANCES];
-  CeedMagmaFunction GradTranspose[MAGMA_NONTENSOR_KERNEL_INSTANCES];
+  CeedMagmaFunction Deriv[MAGMA_NONTENSOR_KERNEL_INSTANCES];
+  CeedMagmaFunction DerivTranspose[MAGMA_NONTENSOR_KERNEL_INSTANCES];
   CeedMagmaFunction Weight;
   CeedScalar       *d_interp;
   CeedScalar       *d_grad;
+  CeedScalar       *d_div;
+  CeedScalar       *d_curl;
   CeedScalar       *d_q_weight;
 } CeedBasisNonTensor_Magma;
 
 CEED_INTERN int CeedBasisCreateTensorH1_Magma(CeedInt dim, CeedInt P_1d, CeedInt Q_1d, const CeedScalar *interp_1d, const CeedScalar *grad_1d,
                                               const CeedScalar *q_ref_1d, const CeedScalar *q_weight_1d, CeedBasis basis);
-
 CEED_INTERN int CeedBasisCreateH1_Magma(CeedElemTopology topo, CeedInt dim, CeedInt num_dof, CeedInt num_qpts, const CeedScalar *interp,
                                         const CeedScalar *grad, const CeedScalar *q_ref, const CeedScalar *q_weight, CeedBasis basis);
+CEED_INTERN int CeedBasisCreateHdiv_Magma(CeedElemTopology topo, CeedInt dim, CeedInt num_dof, CeedInt num_qpts, const CeedScalar *interp,
+                                          const CeedScalar *div, const CeedScalar *q_ref, const CeedScalar *q_weight, CeedBasis basis);
+CEED_INTERN int CeedBasisCreateHcurl_Magma(CeedElemTopology topo, CeedInt dim, CeedInt num_dof, CeedInt num_qpts, const CeedScalar *interp,
+                                           const CeedScalar *curl, const CeedScalar *q_ref, const CeedScalar *q_weight, CeedBasis basis);
 
 CEED_INTERN magma_int_t magma_isdevptr(const void *);
 
