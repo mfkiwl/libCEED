@@ -363,21 +363,25 @@ PetscErrorCode SetupLibceedBDDC(DM dm_Pi, CeedData data_fine, CeedDataBDDC data_
   // Create the mass or diff operator
   // -- Interface vertices
   CeedOperatorCreate(ceed, data_fine->qf_apply, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_Pi_Pi);
+  CeedOperatorSetName(op_Pi_Pi, "BDDC Pi, Pi operator");
   CeedOperatorSetField(op_Pi_Pi, "u", elem_restr_Pi, basis_Pi, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_Pi_Pi, "qdata", data_fine->elem_restr_qd_i, CEED_BASIS_COLLOCATED, data_fine->q_data);
   CeedOperatorSetField(op_Pi_Pi, "v", elem_restr_Pi, basis_Pi, CEED_VECTOR_ACTIVE);
   // -- Subdomains to interface vertices
   CeedOperatorCreate(ceed, data_fine->qf_apply, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_Pi_r);
+  CeedOperatorSetName(op_Pi_r, "BDDC Pi, r operator");
   CeedOperatorSetField(op_Pi_r, "u", elem_restr_r, basis_u, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_Pi_r, "qdata", data_fine->elem_restr_qd_i, CEED_BASIS_COLLOCATED, data_fine->q_data);
   CeedOperatorSetField(op_Pi_r, "v", elem_restr_Pi, basis_Pi, CEED_VECTOR_ACTIVE);
   // -- Interface vertices to subdomains
   CeedOperatorCreate(ceed, data_fine->qf_apply, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_r_Pi);
+  CeedOperatorSetName(op_r_Pi, "BDDC r, Pi operator");
   CeedOperatorSetField(op_r_Pi, "u", elem_restr_Pi, basis_Pi, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_r_Pi, "qdata", data_fine->elem_restr_qd_i, CEED_BASIS_COLLOCATED, data_fine->q_data);
   CeedOperatorSetField(op_r_Pi, "v", elem_restr_r, basis_u, CEED_VECTOR_ACTIVE);
   // -- Subdomains
   CeedOperatorCreate(ceed, data_fine->qf_apply, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_r_r);
+  CeedOperatorSetName(op_r_r, "BDDC r, r operator");
   CeedOperatorSetField(op_r_r, "u", elem_restr_r, basis_u, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_r_r, "qdata", data_fine->elem_restr_qd_i, CEED_BASIS_COLLOCATED, data_fine->q_data);
   CeedOperatorSetField(op_r_r, "v", elem_restr_r, basis_u, CEED_VECTOR_ACTIVE);
@@ -391,26 +395,32 @@ PetscErrorCode SetupLibceedBDDC(DM dm_Pi, CeedData data_fine, CeedDataBDDC data_
   CeedQFunctionCreateIdentity(ceed, num_comp_u, CEED_EVAL_NONE, CEED_EVAL_INTERP, &qf_restrict_Pi);
   // -- Injection to interface vertices
   CeedOperatorCreate(ceed, qf_inject_Pi, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_inject_Pi);
+  CeedOperatorSetName(op_inject_Pi, "BDDC Pi injection operator");
   CeedOperatorSetField(op_inject_Pi, "input", elem_restr_r, basis_Pi_r, CEED_VECTOR_ACTIVE);  // Note: from r to Pi
   CeedOperatorSetField(op_inject_Pi, "output", elem_restr_Pi, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   // -- Injection to broken interface vertices
   CeedOperatorCreate(ceed, qf_restrict_Pi, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_inject_Pi_r);
+  CeedOperatorSetName(op_inject_Pi_r, "BDDC Pi, r injection operator");
   CeedOperatorSetField(op_inject_Pi_r, "input", elem_restr_Pi_r, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);  // Note: from r to Pi_r
   CeedOperatorSetField(op_inject_Pi_r, "output", elem_restr_r, basis_Pi_r, CEED_VECTOR_ACTIVE);
   // -- Injection to subdomains
   CeedOperatorCreate(ceed, qf_identity, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_inject_r);
+  CeedOperatorSetName(op_inject_r, "BDDC r injection operator");
   CeedOperatorSetField(op_inject_r, "input", data_fine->elem_restr_u, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_inject_r, "output", elem_restr_r, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   // -- Restriction from interface vertices
   CeedOperatorCreate(ceed, qf_restrict_Pi, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_restrict_Pi);
+  CeedOperatorSetName(op_restrict_Pi, "BDDC Pi restriction operator");
   CeedOperatorSetField(op_restrict_Pi, "input", elem_restr_Pi, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_restrict_Pi, "output", elem_restr_r, basis_Pi_r, CEED_VECTOR_ACTIVE);  // Note: from Pi to r
   // -- Restriction from interface vertices
   CeedOperatorCreate(ceed, qf_inject_Pi, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_restrict_Pi_r);
+  CeedOperatorSetName(op_restrict_Pi_r, "BDDC Pi, r restriction operator");
   CeedOperatorSetField(op_restrict_Pi_r, "input", elem_restr_r, basis_Pi_r, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_restrict_Pi_r, "output", elem_restr_Pi_r, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);  // Note: from Pi_r to r
   // -- Restriction from subdomains
   CeedOperatorCreate(ceed, qf_identity, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_restrict_r);
+  CeedOperatorSetName(op_restrict_r, "BDDC r restriction operator");
   CeedOperatorSetField(op_restrict_r, "input", elem_restr_r, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_restrict_r, "output", data_fine->elem_restr_u, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   // -- Cleanup
