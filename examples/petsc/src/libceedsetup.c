@@ -401,7 +401,6 @@ PetscErrorCode SetupLibceedBDDC(DM dm_Pi, CeedData data_fine, CeedDataBDDC data_
   CeedOperatorCreate(ceed, qf_identity, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_inject_r);
   CeedOperatorSetField(op_inject_r, "input", data_fine->elem_restr_u, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_inject_r, "output", elem_restr_r, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
-  CeedOperatorSetNumQuadraturePoints(op_inject_r, elem_size);
   // -- Restriction from interface vertices
   CeedOperatorCreate(ceed, qf_restrict_Pi, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_restrict_Pi);
   CeedOperatorSetField(op_restrict_Pi, "input", elem_restr_Pi, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
@@ -414,7 +413,6 @@ PetscErrorCode SetupLibceedBDDC(DM dm_Pi, CeedData data_fine, CeedDataBDDC data_
   CeedOperatorCreate(ceed, qf_identity, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op_restrict_r);
   CeedOperatorSetField(op_restrict_r, "input", elem_restr_r, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_restrict_r, "output", data_fine->elem_restr_u, CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
-  CeedOperatorSetNumQuadraturePoints(op_restrict_r, elem_size);
   // -- Cleanup
   CeedQFunctionDestroy(&qf_identity);
   CeedQFunctionDestroy(&qf_inject_Pi);
