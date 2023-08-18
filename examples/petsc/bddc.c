@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
   PetscCall(VecGetSize(X_Pi_loc, &xl_Pi_size));
 
   // Operator
-  PetscCall(PetscMalloc1(1, &apply_ctx));
+  PetscCall(PetscNew(&apply_ctx));
   PetscCall(MatCreateShell(comm, l_size, l_size, g_size, g_size, apply_ctx, &mat_O));
   PetscCall(MatShellSetOperation(mat_O, MATOP_MULT, (void (*)(void))MatMult_Ceed));
   PetscCall(MatShellSetOperation(mat_O, MATOP_GET_DIAGONAL, (void (*)(void))MatGetDiag));
@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
   CeedVectorDestroy(&rhs_ceed);
 
   // Set up libCEED operator on interface vertices
-  PetscCall(PetscMalloc1(1, &ceed_data_bddc));
+  PetscCall(PetscNew(&ceed_data_bddc));
   PetscCall(SetupLibceedBDDC(dm_Pi, ceed_data, ceed_data_bddc, g_Pi_size, xl_Pi_size, bp_options[bp_choice]));
 
   // Create the injection/restriction QFunction
@@ -317,7 +317,7 @@ int main(int argc, char **argv) {
     PetscCall(SNESSetJacobian(snes_Pi, mat_S_Pi, mat_S_Pi, NULL, NULL));
 
     // -- Residual evaluation function
-    PetscCall(PetscMalloc1(1, &bddc_ctx));
+    PetscCall(PetscNew(&bddc_ctx));
     PetscCall(SNESSetFunction(snes_Pi, X_Pi, FormResidual_BDDCSchur, bddc_ctx));
   }
   {
@@ -503,7 +503,7 @@ int main(int argc, char **argv) {
     }
     {
       // Set up error operator context
-      PetscCall(PetscMalloc1(1, &error_ctx));
+      PetscCall(PetscNew(&error_ctx));
       PetscCall(SetupErrorOperatorCtx(comm, dm, ceed, ceed_data, X_loc, op_error, error_ctx));
       PetscScalar l2_error;
       PetscCall(ComputeL2Error(X, &l2_error, error_ctx));
