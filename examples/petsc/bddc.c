@@ -323,19 +323,21 @@ int main(int argc, char **argv) {
   {
     // Element Schur compliment operator
     // -- Vectors
-    PetscInt numesh_elem;
-    CeedElemRestrictionGetNumElements(ceed_data->elem_restr_u, &numesh_elem);
+    PetscInt num_elem, elem_size;
+
+    CeedElemRestrictionGetNumElements(ceed_data_bddc->elem_restr_Pi, &num_elem);
+    CeedElemRestrictionGetElementSize(ceed_data_bddc->elem_restr_Pi, &elem_size);
     PetscCall(VecCreate(comm, &X_Pi_r_loc));
-    PetscCall(VecSetSizes(X_Pi_r_loc, numesh_elem * 8, PETSC_DECIDE));
+    PetscCall(VecSetSizes(X_Pi_r_loc, num_elem * 8, PETSC_DECIDE));
     PetscCall(VecSetType(X_Pi_r_loc, vec_type));
 
     // -- Jacobian Matrix
-    PetscCall(MatCreateSeqAIJ(comm, 8 * numesh_elem, 8 * numesh_elem, 8, NULL, &mat_S_Pi_r));
-    for (PetscInt e = 0; e < numesh_elem; e++) {
-      for (PetscInt i = 0; i < 8; i++) {
-        for (PetscInt j = 0; j < 8; j++) {
-          PetscInt    row   = e * 8 + i;
-          PetscInt    col   = e * 8 + j;
+    PetscCall(MatCreateSeqAIJ(comm, elem_size * num_elem, elem_size * num_elem, elem_size, NULL, &mat_S_Pi_r));
+    for (PetscInt e = 0; e < num_elem; e++) {
+      for (PetscInt i = 0; i < elem_size; i++) {
+        for (PetscInt j = 0; j < elem_size; j++) {
+          PetscInt    row   = e * elem_size + i;
+          PetscInt    col   = e * elem_size + j;
           PetscScalar value = i + j;
           PetscCall(MatSetValues(mat_S_Pi_r, 1, &row, 1, &col, &value, INSERT_VALUES));
         }
