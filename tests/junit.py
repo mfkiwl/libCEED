@@ -174,15 +174,16 @@ if __name__ == '__main__':
     # run tests
     if 'smartsim' in args.test:
         sys.path.insert(0, str(Path(__file__).parents[1] / "examples" / "fluids"))
-        from smartsim_regression_framework import setup, teardown, test_junit  # nopep8
+        from smartsim_regression_framework import SmartSimTest
 
-        setup(Path(__file__).parent / 'test_dir')
+        test_framework = SmartSimTest(Path(__file__).parent / 'test_dir')
+        test_framework.setup()
         results = []
         print(f'1..{len(args.ceed_backends)}')
         for i, backend in enumerate(args.ceed_backends):
-            results.append(test_junit(args.ceed_backends))
+            results.append(test_framework.test_junit(backend))
             print_test_case(results[i], TestSpec("SmartSim Tests"), args.mode, i)
-        teardown(Path(__file__).parent / 'test_dir')
+        test_framework.teardown()
         result: TestSuite = TestSuite('SmartSim Tests', results)
     else:
         result: TestSuite = run_tests(args.test, args.ceed_backends, args.mode, args.nproc, CeedSuiteSpec())
