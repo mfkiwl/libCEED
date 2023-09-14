@@ -700,20 +700,20 @@ int CeedMatrixPseudoinverse(Ceed ceed, CeedScalar *mat, CeedInt m, CeedInt n, Ce
   CeedScalar *tau, *I, *mat_copy;
 
   CeedCall(CeedCalloc(m, &tau));
-  CeedCall(CeedCalloc(n * n, &I));
-  CeedCall(CeedCalloc(m * n, &mat_copy));
+  CeedCall(CeedCalloc(n * m, &I));
+  CeedCall(CeedCalloc(m * m, &mat_copy));
   memcpy(mat_copy, mat, m * n * sizeof mat[0]);
 
   // QR Factorization, mat = Q R
   CeedCall(CeedQRFactorization(ceed, mat_copy, tau, m, n));
 
   // mat_pinv = R_inv Q^T
-  for (CeedInt i = 0; i < n; i++) I[i * n + i] = 1.0;
+  for (CeedInt i = 0; i < n; i++) I[i * m + i] = 1.0;
   // -- Apply R_inv, mat_pinv = I R_inv
   for (CeedInt i = 0; i < n; i++) {  // Row i
-    mat_pinv[n * i] = I[n * i] / mat_copy[0];
+    mat_pinv[n * i] = I[m * i] / mat_copy[0];
     for (CeedInt j = 1; j < m; j++) {  // Column j
-      mat_pinv[j + n * i] = I[j + n * i];
+      mat_pinv[j + n * i] = I[j + m * i];
       for (CeedInt k = 0; k < j; k++) mat_pinv[j + n * i] -= mat_copy[j + m * k] * mat_pinv[k + n * i];
       mat_pinv[j + n * i] /= mat_copy[j + n * j];
     }
