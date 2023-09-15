@@ -26,41 +26,41 @@
 
   @param[in] ceed     Ceed object for error handling
   @param[in] qf_field QFunction Field matching Operator Field
-  @param[in] r        Operator Field ElemRestriction
-  @param[in] b        Operator Field Basis
+  @param[in] rstr     Operator Field ElemRestriction
+  @param[in] basis    Operator Field Basis
 
   @return An error code: 0 - success, otherwise - failure
 
   @ref Developer
 **/
-static int CeedOperatorCheckField(Ceed ceed, CeedQFunctionField qf_field, CeedElemRestriction r, CeedBasis b) {
+static int CeedOperatorCheckField(Ceed ceed, CeedQFunctionField qf_field, CeedElemRestriction rstr, CeedBasis basis) {
   CeedInt      dim = 1, num_comp = 1, q_comp = 1, rstr_num_comp = 1, size = qf_field->size;
   CeedEvalMode eval_mode = qf_field->eval_mode;
 
   // Restriction
-  CeedCheck((r == CEED_ELEMRESTRICTION_NONE) == (eval_mode == CEED_EVAL_WEIGHT), ceed, CEED_ERROR_INCOMPATIBLE,
+  CeedCheck((rstr == CEED_ELEMRESTRICTION_NONE) == (eval_mode == CEED_EVAL_WEIGHT), ceed, CEED_ERROR_INCOMPATIBLE,
             "CEED_ELEMRESTRICTION_NONE and CEED_EVAL_WEIGHT must be used together.");
-  if (r != CEED_ELEMRESTRICTION_NONE) {
-    CeedCall(CeedElemRestrictionGetNumComponents(r, &rstr_num_comp));
+  if (rstr != CEED_ELEMRESTRICTION_NONE) {
+    CeedCall(CeedElemRestrictionGetNumComponents(rstr, &rstr_num_comp));
   }
   // Basis
-  CeedCheck((b == CEED_BASIS_NONE) == (eval_mode == CEED_EVAL_NONE), ceed, CEED_ERROR_INCOMPATIBLE,
+  CeedCheck((basis == CEED_BASIS_NONE) == (eval_mode == CEED_EVAL_NONE), ceed, CEED_ERROR_INCOMPATIBLE,
             "CEED_BASIS_NONE and CEED_EVAL_NONE must be used together.");
-  if (b != CEED_BASIS_NONE) {
-    CeedCall(CeedBasisGetDimension(b, &dim));
-    CeedCall(CeedBasisGetNumComponents(b, &num_comp));
-    CeedCall(CeedBasisGetNumQuadratureComponents(b, eval_mode, &q_comp));
-    CeedCheck(r == CEED_ELEMRESTRICTION_NONE || rstr_num_comp == num_comp, ceed, CEED_ERROR_DIMENSION,
+  if (basis != CEED_BASIS_NONE) {
+    CeedCall(CeedBasisGetDimension(basis, &dim));
+    CeedCall(CeedBasisGetNumComponents(basis, &num_comp));
+    CeedCall(CeedBasisGetNumQuadratureComponents(basis, eval_mode, &q_comp));
+    CeedCheck(rstr == CEED_ELEMRESTRICTION_NONE || rstr_num_comp == num_comp, ceed, CEED_ERROR_DIMENSION,
               "Field '%s' of size %" CeedInt_FMT " and EvalMode %s: ElemRestriction has %" CeedInt_FMT " components, but Basis has %" CeedInt_FMT
               " components",
-              qf_field->field_name, qf_field->size, CeedEvalModes[qf_field->eval_mode], rstr_num_comp, num_comp);
+              qf_field->field_name, size, CeedEvalModes[eval_mode], rstr_num_comp, num_comp);
   }
   // Field size
   switch (eval_mode) {
     case CEED_EVAL_NONE:
       CeedCheck(size == rstr_num_comp, ceed, CEED_ERROR_DIMENSION,
-                "Field '%s' of size %" CeedInt_FMT " and EvalMode %s: ElemRestriction has %" CeedInt_FMT " components", qf_field->field_name,
-                qf_field->size, CeedEvalModes[qf_field->eval_mode], rstr_num_comp);
+                "Field '%s' of size %" CeedInt_FMT " and EvalMode %s: ElemRestriction has %" CeedInt_FMT " components", qf_field->field_name, size,
+                CeedEvalModes[eval_mode], rstr_num_comp);
       break;
     case CEED_EVAL_INTERP:
     case CEED_EVAL_GRAD:
@@ -68,7 +68,7 @@ static int CeedOperatorCheckField(Ceed ceed, CeedQFunctionField qf_field, CeedEl
     case CEED_EVAL_CURL:
       CeedCheck(size == num_comp * q_comp, ceed, CEED_ERROR_DIMENSION,
                 "Field '%s' of size %" CeedInt_FMT " and EvalMode %s: ElemRestriction/Basis has %" CeedInt_FMT " components", qf_field->field_name,
-                qf_field->size, CeedEvalModes[qf_field->eval_mode], num_comp * q_comp);
+                size, CeedEvalModes[eval_mode], num_comp * q_comp);
       break;
     case CEED_EVAL_WEIGHT:
       // No additional checks required
@@ -671,12 +671,12 @@ int CeedOperatorReferenceCopy(CeedOperator op, CeedOperator *op_copy) {
   There can be at most one active input CeedVector and at most one active output CeedVector passed to CeedOperatorApply().
 
   The number of quadrature points must agree across all points.
-  When using @ref CEED_BASIS_NONE, the number of quadrature points is determined by the element size of r.
+  When using @ref CEED_BASIS_NONE, the number of quadrature points is determined by the element size of rstr.
 
   @param[in,out] op         CeedOperator on which to provide the field
   @param[in]     field_name Name of the field (to be matched with the name used by CeedQFunction)
-  @param[in]     r          CeedElemRestriction
-  @param[in]     b          CeedBasis in which the field resides or @ref CEED_BASIS_NONE if collocated with quadrature points
+  @param[in]     rstr       CeedElemRestriction
+  @param[in]     basis      CeedBasis in which the field resides or @ref CEED_BASIS_NONE if collocated with quadrature points
   @param[in]     v          CeedVector to be used by CeedOperator or @ref CEED_VECTOR_ACTIVE if field is active or @ref CEED_VECTOR_NONE
                               if using @ref CEED_EVAL_WEIGHT in the QFunction
 
@@ -684,35 +684,31 @@ int CeedOperatorReferenceCopy(CeedOperator op, CeedOperator *op_copy) {
 
   @ref User
 **/
-int CeedOperatorSetField(CeedOperator op, const char *field_name, CeedElemRestriction r, CeedBasis b, CeedVector v) {
-  bool               is_input = true;
-  CeedInt            num_elem = 0, num_qpts = 0;
-  CeedQFunctionField qf_field;
-  CeedOperatorField *op_field;
+int CeedOperatorSetField(CeedOperator op, const char *field_name, CeedElemRestriction rstr, CeedBasis basis, CeedVector v) {
+  bool                is_input = true;
+  CeedInt             num_elem = 0, num_qpts = 0;
+  CeedRestrictionType rstr_type;
+  CeedQFunctionField  qf_field;
+  CeedOperatorField  *op_field;
 
   CeedCheck(!op->is_composite, op->ceed, CEED_ERROR_INCOMPATIBLE, "Cannot add field to composite operator.");
   CeedCheck(!op->is_immutable, op->ceed, CEED_ERROR_MAJOR, "Operator cannot be changed after set as immutable");
-  CeedCheck(r, op->ceed, CEED_ERROR_INCOMPATIBLE, "ElemRestriction r for field \"%s\" must be non-NULL.", field_name);
-  CeedCheck(b, op->ceed, CEED_ERROR_INCOMPATIBLE, "Basis b for field \"%s\" must be non-NULL.", field_name);
-  CeedCheck(v, op->ceed, CEED_ERROR_INCOMPATIBLE, "Vector v for field \"%s\" must be non-NULL.", field_name);
+  CeedCheck(rstr, op->ceed, CEED_ERROR_INCOMPATIBLE, "ElemRestriction for field \"%s\" must be non-NULL.", field_name);
+  CeedCheck(basis, op->ceed, CEED_ERROR_INCOMPATIBLE, "Basis for field \"%s\" must be non-NULL.", field_name);
+  CeedCheck(v, op->ceed, CEED_ERROR_INCOMPATIBLE, "Vector for field \"%s\" must be non-NULL.", field_name);
 
-  CeedCall(CeedElemRestrictionGetNumElements(r, &num_elem));
-  CeedCheck(r == CEED_ELEMRESTRICTION_NONE || !op->has_restriction || op->num_elem == num_elem, op->ceed, CEED_ERROR_DIMENSION,
+  CeedCall(CeedElemRestrictionGetNumElements(rstr, &num_elem));
+  CeedCheck(rstr == CEED_ELEMRESTRICTION_NONE || !op->has_restriction || op->num_elem == num_elem, op->ceed, CEED_ERROR_DIMENSION,
             "ElemRestriction with %" CeedInt_FMT " elements incompatible with prior %" CeedInt_FMT " elements", num_elem, op->num_elem);
-  {
-    CeedRestrictionType rstr_type;
-
-    CeedCall(CeedElemRestrictionGetType(r, &rstr_type));
-    CeedCheck(rstr_type != CEED_RESTRICTION_POINTS, op->ceed, CEED_ERROR_UNSUPPORTED,
-              "CeedElemRestrictionAtPoints not supported for standard operator fields");
-  }
-
-  if (b == CEED_BASIS_NONE) CeedCall(CeedElemRestrictionGetElementSize(r, &num_qpts));
-  else CeedCall(CeedBasisGetNumQuadraturePoints(b, &num_qpts));
+  CeedCall(CeedElemRestrictionGetType(rstr, &rstr_type));
+  CeedCheck(rstr_type != CEED_RESTRICTION_POINTS, op->ceed, CEED_ERROR_UNSUPPORTED,
+            "CeedElemRestrictionAtPoints not supported for standard operator fields");
+  if (basis == CEED_BASIS_NONE) CeedCall(CeedElemRestrictionGetElementSize(rstr, &num_qpts));
+  else CeedCall(CeedBasisGetNumQuadraturePoints(basis, &num_qpts));
   CeedCheck(op->num_qpts == 0 || op->num_qpts == num_qpts, op->ceed, CEED_ERROR_DIMENSION,
             "%s must correspond to the same number of quadrature points as previously added Bases. Found %" CeedInt_FMT
             " quadrature points but expected %" CeedInt_FMT " quadrature points.",
-            b == CEED_BASIS_NONE ? "ElemRestriction" : "Basis", num_qpts, op->num_qpts);
+            basis == CEED_BASIS_NONE ? "ElemRestriction" : "Basis", num_qpts, op->num_qpts);
   for (CeedInt i = 0; i < op->qf->num_input_fields; i++) {
     if (!strcmp(field_name, (*op->qf->input_fields[i]).field_name)) {
       qf_field = op->qf->input_fields[i];
@@ -732,13 +728,13 @@ int CeedOperatorSetField(CeedOperator op, const char *field_name, CeedElemRestri
   return CeedError(op->ceed, CEED_ERROR_INCOMPLETE, "QFunction has no knowledge of field '%s'", field_name);
   // LCOV_EXCL_STOP
 found:
-  CeedCall(CeedOperatorCheckField(op->ceed, qf_field, r, b));
+  CeedCall(CeedOperatorCheckField(op->ceed, qf_field, rstr, basis));
   CeedCall(CeedCalloc(1, op_field));
 
   if (v == CEED_VECTOR_ACTIVE) {
     CeedSize l_size;
 
-    CeedCall(CeedElemRestrictionGetLVectorSize(r, &l_size));
+    CeedCall(CeedElemRestrictionGetLVectorSize(rstr, &l_size));
     if (is_input) {
       if (op->input_size == -1) op->input_size = l_size;
       CeedCheck(l_size == op->input_size, op->ceed, CEED_ERROR_INCOMPATIBLE, "LVector size %td does not match previous size %td", l_size,
@@ -751,12 +747,12 @@ found:
   }
 
   CeedCall(CeedVectorReferenceCopy(v, &(*op_field)->vec));
-  CeedCall(CeedElemRestrictionReferenceCopy(r, &(*op_field)->elem_rstr));
-  if (r != CEED_ELEMRESTRICTION_NONE) {
+  CeedCall(CeedElemRestrictionReferenceCopy(rstr, &(*op_field)->elem_rstr));
+  if (rstr != CEED_ELEMRESTRICTION_NONE) {
     op->num_elem        = num_elem;
     op->has_restriction = true;  // Restriction set, but num_elem may be 0
   }
-  CeedCall(CeedBasisReferenceCopy(b, &(*op_field)->basis));
+  CeedCall(CeedBasisReferenceCopy(basis, &(*op_field)->basis));
   if (op->num_qpts == 0) CeedCall(CeedOperatorSetNumQuadraturePoints(op, num_qpts));
 
   op->num_fields += 1;

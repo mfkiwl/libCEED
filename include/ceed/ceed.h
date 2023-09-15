@@ -392,7 +392,7 @@ CEED_EXTERN int CeedQFunctionContextDestroy(CeedQFunctionContext *ctx);
 CEED_EXTERN int CeedOperatorCreate(Ceed ceed, CeedQFunction qf, CeedQFunction dqf, CeedQFunction dqfT, CeedOperator *op);
 CEED_EXTERN int CeedCompositeOperatorCreate(Ceed ceed, CeedOperator *op);
 CEED_EXTERN int CeedOperatorReferenceCopy(CeedOperator op, CeedOperator *op_copy);
-CEED_EXTERN int CeedOperatorSetField(CeedOperator op, const char *field_name, CeedElemRestriction r, CeedBasis b, CeedVector v);
+CEED_EXTERN int CeedOperatorSetField(CeedOperator op, const char *field_name, CeedElemRestriction rstr, CeedBasis basis, CeedVector v);
 CEED_EXTERN int CeedOperatorGetFields(CeedOperator op, CeedInt *num_input_fields, CeedOperatorField **input_fields, CeedInt *num_output_fields,
                                       CeedOperatorField **output_fields);
 CEED_EXTERN int CeedCompositeOperatorAddSub(CeedOperator composite_op, CeedOperator sub_op);
