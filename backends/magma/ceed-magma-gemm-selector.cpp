@@ -49,9 +49,6 @@ static inline auto gemm_selector_get_data(int gpu_arch, char precision, char tra
 
 ////////////////////////////////////////////////////////////////////////////////
 void gemm_selector(int gpu_arch, char precision, char transA, int m, int n, int k, int *nbatch, int *use_magma) {
-  *nbatch    = n;
-  *use_magma = 0;
-
   const auto &data = gemm_selector_get_data(gpu_arch, precision, transA);
   int         ir   = -1;
   double      norm = std::numeric_limits<double>::max();
@@ -88,6 +85,9 @@ void gemm_selector(int gpu_arch, char precision, char transA, int m, int n, int 
     int nbatch_ = data[ir][N_BATCH_INDEX];
     *nbatch     = (n_ == nbatch_) ? n : nbatch_;
     *use_magma  = data[ir][USE_MAGMA_INDEX];
+  } else {
+    *nbatch    = n;
+    *use_magma = 0;
   }
 }
 
@@ -111,24 +111,20 @@ static inline auto nontensor_rtc_get_data(int gpu_arch, char transA, int qcomp) 
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-CeedInt nontensor_rtc_get_nb(int gpu_arch, char transA, int qcomp, int P_, int N, int Q_) {
-  CeedInt P  = (transA == 'n') ? P_ : Q_;
-  CeedInt Q  = (transA == 'n') ? Q_ : P_;
-  CeedInt NB = 1;
-
+CeedInt nontensor_rtc_get_nb(int gpu_arch, char transA, int qcomp, int m, int n, int k) {
   const auto &data = nontensor_rtc_get_data(gpu_arch, transA, qcomp);
   int         ir   = -1;
   double      norm = std::numeric_limits<double>::max();
 
   for (size_t i = 0; i < data.size(); i++) {
-    int ip = data[i][M_INDEX_RTC];
+    int im = data[i][M_INDEX_RTC];
     int in = data[i][N_INDEX_RTC];
-    int iq = data[i][K_INDEX_RTC];
+    int ik = data[i][K_INDEX_RTC];
 
-    double pdiff = (double)(ip - P);
-    double ndiff = (double)(in - N);
-    double qdiff = (double)(iq - Q);
-    double nrm   = sqrt(pdiff * pdiff + ndiff * ndiff + qdiff * qdiff);
+    double mdiff = (double)(im - m);
+    double ndiff = (double)(in - n);
+    double kdiff = (double)(ik - k);
+    double nrm   = sqrt(mdiff * mdiff + ndiff * ndiff + kdiff * kdiff);
 
     if (nrm < norm) {
       norm = nrm;
@@ -142,9 +138,5 @@ CeedInt nontensor_rtc_get_nb(int gpu_arch, char transA, int qcomp, int P_, int N
     }
   }
 
-  if (ir >= 0) {
-    NB = data[ir][NB_INDEX_RTC];
-  }
-
-  return NB;
+  return (ir >= 0) ? data[ir][NB_INDEX_RTC] : 1;
 }

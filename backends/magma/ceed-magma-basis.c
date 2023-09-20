@@ -348,7 +348,7 @@ static int CeedBasisApplyNonTensor_Magma(CeedBasis basis, CeedInt num_elem, Ceed
           diff = idiff;
         }
       }
-      NB = nontensor_rtc_get_nb(arch, (t_mode == CEED_TRANSPOSE) ? 't' : 'n', q_comp, P, n_array[iN], Q);
+      NB = nontensor_rtc_get_nb(arch, (t_mode == CEED_TRANSPOSE) ? 't' : 'n', q_comp, M, n_array[iN], K);
 
       // Compile kernels for N as needed
       if (!impl->module_interp[iN]) {
@@ -371,10 +371,10 @@ static int CeedBasisApplyNonTensor_Magma(CeedBasis basis, CeedInt num_elem, Ceed
             CeedCallBackend(CeedBasisGetNumQuadratureComponents(basis, CEED_EVAL_CURL, &q_comp_deriv));
             break;
         }
-        nb_interp_n = nontensor_rtc_get_nb(arch, 'n', q_comp_interp, P, n_array[iN], Q);
-        nb_interp_t = nontensor_rtc_get_nb(arch, 't', q_comp_interp, P, n_array[iN], Q);
-        nb_deriv_n  = nontensor_rtc_get_nb(arch, 'n', q_comp_deriv, P, n_array[iN], Q);
-        nb_deriv_t  = nontensor_rtc_get_nb(arch, 't', q_comp_deriv, P, n_array[iN], Q);
+        nb_interp_n = nontensor_rtc_get_nb(arch, 'n', q_comp_interp, M, n_array[iN], K);
+        nb_interp_t = nontensor_rtc_get_nb(arch, 't', q_comp_interp, M, n_array[iN], K);
+        nb_deriv_n  = nontensor_rtc_get_nb(arch, 'n', q_comp_deriv, M, n_array[iN], K);
+        nb_deriv_t  = nontensor_rtc_get_nb(arch, 't', q_comp_deriv, M, n_array[iN], K);
 
         // The RTC compilation code expects a Ceed with the common Ceed_Cuda or Ceed_Hip data
         CeedCallBackend(CeedGetDelegate(ceed, &ceed_delegate));
