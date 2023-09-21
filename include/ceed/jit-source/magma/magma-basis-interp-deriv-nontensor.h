@@ -112,7 +112,8 @@ static __device__ __inline__ void magma_basis_nontensor_device_t(const int n, Ce
 
 ////////////////////////////////////////////////////////////////////////////////
 extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_Q, MAGMA_MAXTHREADS_1D)) __global__
-    void magma_interp_nontensor_n(const int n, CeedScalar const *dA, int ldda, CeedScalar const *dB, int lddb, CeedScalar *dC, int lddc) {
+    void magma_interp_nontensor_n(const int n, CeedScalar const *__restrict__ dA, int ldda, CeedScalar const *__restrict__ dB, int lddb,
+                                  CeedScalar *__restrict__ dC, int lddc) {
   MAGMA_DEVICE_SHARED(CeedScalar, shared_data);
 
   magma_basis_nontensor_device_n<CeedScalar, BASIS_Q_COMP_INTERP, BASIS_P, BASIS_Q, BASIS_NB_INTERP_N>(n, dA, ldda, dB, lddb, dC, lddc,
@@ -121,7 +122,8 @@ extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_Q, MAGMA_MAXTHREADS_1D)) _
 
 ////////////////////////////////////////////////////////////////////////////////
 extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_P, MAGMA_MAXTHREADS_1D)) __global__
-    void magma_interp_nontensor_t(const int n, CeedScalar const *dA, int ldda, CeedScalar const *dB, int lddb, CeedScalar *dC, int lddc) {
+    void magma_interp_nontensor_t(const int n, CeedScalar const *__restrict__ dA, int ldda, CeedScalar const *__restrict__ dB, int lddb,
+                                  CeedScalar *__restrict__ dC, int lddc) {
   MAGMA_DEVICE_SHARED(CeedScalar, shared_data);
 
   magma_basis_nontensor_device_t<CeedScalar, BASIS_Q_COMP_INTERP, BASIS_P, BASIS_Q, BASIS_NB_INTERP_T>(n, dA, ldda, dB, lddb, dC, lddc,
@@ -130,7 +132,8 @@ extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_P, MAGMA_MAXTHREADS_1D)) _
 
 ////////////////////////////////////////////////////////////////////////////////
 extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_Q, MAGMA_MAXTHREADS_1D)) __global__
-    void magma_deriv_nontensor_n(const int n, CeedScalar const *dA, int ldda, CeedScalar const *dB, int lddb, CeedScalar *dC, int lddc) {
+    void magma_deriv_nontensor_n(const int n, CeedScalar const *__restrict__ dA, int ldda, CeedScalar const *__restrict__ dB, int lddb,
+                                 CeedScalar *__restrict__ dC, int lddc) {
   MAGMA_DEVICE_SHARED(CeedScalar, shared_data);
 
   magma_basis_nontensor_device_n<CeedScalar, BASIS_Q_COMP_DERIV, BASIS_P, BASIS_Q, BASIS_NB_DERIV_N>(n, dA, ldda, dB, lddb, dC, lddc,
@@ -139,7 +142,8 @@ extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_Q, MAGMA_MAXTHREADS_1D)) _
 
 ////////////////////////////////////////////////////////////////////////////////
 extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_P, MAGMA_MAXTHREADS_1D)) __global__
-    void magma_deriv_nontensor_t(const int n, CeedScalar const *dA, int ldda, CeedScalar const *dB, int lddb, CeedScalar *dC, int lddc) {
+    void magma_deriv_nontensor_t(const int n, CeedScalar const *__restrict__ dA, int ldda, CeedScalar const *__restrict__ dB, int lddb,
+                                 CeedScalar *__restrict__ dC, int lddc) {
   MAGMA_DEVICE_SHARED(CeedScalar, shared_data);
 
   magma_basis_nontensor_device_t<CeedScalar, BASIS_Q_COMP_DERIV, BASIS_P, BASIS_Q, BASIS_NB_DERIV_T>(n, dA, ldda, dB, lddb, dC, lddc,

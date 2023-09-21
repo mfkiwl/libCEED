@@ -14,7 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 extern "C" __launch_bounds__(MAGMA_BASIS_BOUNDS(BASIS_Q, MAGMA_MAXTHREADS_1D)) __global__
-    void magma_weight_nontensor(int n, const CeedScalar *dqweight, CeedScalar *dV, int lddv) {
+    void magma_weight_nontensor(int n, const CeedScalar *__restrict__ dqweight, CeedScalar *__restrict__ dV, int lddv) {
   MAGMA_DEVICE_SHARED(CeedScalar, shared_data);
 
   const int tx = threadIdx.x;
