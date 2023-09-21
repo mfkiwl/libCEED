@@ -36,6 +36,7 @@ static __device__ __inline__ void magma_basis_nontensor_device_n(const int n, Ce
   if (id < nblocks) {
     read_B_g2s_1D_nosync<CeedScalar, Q, P, NB>(tx, myn, dB, lddb, sB, sldb);
   }
+  __syncthreads();
 
   // init rA, rC
   CeedScalar rA[P], rC[NB];
@@ -45,14 +46,12 @@ static __device__ __inline__ void magma_basis_nontensor_device_n(const int n, Ce
     // read A (P x Q) using all threads
     read_A_trans_g2r_1D_nosync<CeedScalar, Q, P, NB>(tx, ty, dA, ldda, sA, slda, rA);
 
-    __syncthreads();
     if (id < nblocks) {
       mul_rAsBrC_1D_nosync<CeedScalar, Q, P, NB>(tx, rA, sB, sldb, rC);
 
       // write C
       write_C_r2g_1D_nosync<CeedScalar, Q, P, NB>(tx, myn, rC, dC, lddc);
     }
-    __syncthreads();
   }
 }
 
@@ -85,10 +84,9 @@ static __device__ __inline__ void magma_basis_nontensor_device_t(const int n, Ce
 
   // read B
   read_B_g2s_1D_nosync<CeedScalar, P, Q, NB>(tx, myn, dB, lddb, sB, sldb);
+  __syncthreads();
 
-  __syncthreads();
   mul_rAsBrC_1D_nosync<CeedScalar, P, Q, NB>(tx, rA, sB, sldb, rC);
-  __syncthreads();
 
   // unrolling this loop yields dramatic performance drop using hipcc, so let the compiler decide (no pragma unroll)
   for (int d = 1; d < Q_COMP; d++) {
@@ -99,11 +97,11 @@ static __device__ __inline__ void magma_basis_nontensor_device_t(const int n, Ce
     read_A_notrans_g2r_1D_nosync<CeedScalar, P, Q, NB>(tx, dA, ldda, NULL, 0, rA);
 
     // read B
+    __syncthreads();
     read_B_g2s_1D_nosync<CeedScalar, P, Q, NB>(tx, myn, dB, lddb, sB, sldb);
+    __syncthreads();
 
-    __syncthreads();
     addmul_rAsBrC_1D_nosync<CeedScalar, P, Q, NB>(tx, rA, sB, sldb, rC);
-    __syncthreads();
   }
 
   // write C
